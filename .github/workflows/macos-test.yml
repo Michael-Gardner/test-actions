@@ -1,0 +1,44 @@
+name: Macos Test
+
+on:
+  workflow_call:
+    inputs:
+      arm:
+        required: true
+        type: boolean
+      arch_string:
+        required: false
+        type: string
+        default: ""
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  echo-params:
+    runs-on: ${{ inputs.arm && 'macos-14' || 'ubuntu-latest' }}
+    outputs:
+      arm: ${{ steps.vars.outputs.arm }}
+      arch_string: ${{ steps.vars.outputs.arch_string }}
+      actual_arch: ${{ steps.vars.outputs.actual_arch }}
+    steps:
+      - name: Echo inputs
+        id: vars
+        run: |
+          echo "arm=${{ inputs.arm }}" >> $GITHUB_OUTPUT
+          echo "arch_string=${{ inputs.arch_string }}" >> $GITHUB_OUTPUT
+          actual_arch=$(uname -m)
+          echo "actual_arch=${actual_arch}" >> $GITHUB_OUTPUT
+
+      - name: Print vars
+        run: |
+          echo "${{ toJSON(steps.vars.outputs) }}"
+          echo "${{ toJSON(steps.vars.outputs) }}" > vars.txt
+
+      - name: Upload vars
+        uses: actions/upload-artifact@v4
+        with:
+          name: vars
+          path: vars.txt
+
